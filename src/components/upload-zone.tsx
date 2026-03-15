@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useRef, useEffect } from "react";
+import { useCallback, useState, useRef } from "react";
 
 interface UploadZoneProps {
   onFileSelected: (file: File) => void;
@@ -20,13 +20,8 @@ export default function UploadZone({
   onClear,
 }: UploadZoneProps) {
   const [dragActive, setDragActive] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
   const handleFile = useCallback(
     (file: File | undefined) => {
@@ -39,74 +34,6 @@ export default function UploadZone({
     },
     [onFileSelected]
   );
-
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    setShowCamera(false);
-  }, []);
-
-  const startCamera = useCallback(async () => {
-    setCameraError(null);
-
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setCameraError("Camera not supported in this browser.");
-      return;
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
-      }
-      setShowCamera(true);
-    } catch (err) {
-      setCameraError(
-        err instanceof Error
-          ? err.message
-          : "Unable to access camera. Please check permissions."
-      );
-    }
-  }, []);
-
-  const capturePhoto = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-
-    const width = video.videoWidth;
-    const height = video.videoHeight;
-
-    if (!width || !height) return;
-
-    canvas.width = width;
-    canvas.height = height;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.drawImage(video, 0, 0, width, height);
-
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return;
-        const file = new File([blob], "captured-xray.jpg", {
-          type: "image/jpeg",
-        });
-        handleFile(file);
-        stopCamera();
-      },
-      "image/jpeg",
-      0.95
-    );
-  }, [handleFile, stopCamera]);
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
@@ -124,19 +51,28 @@ export default function UploadZone({
 
   const onDragLeave = useCallback(() => setDragActive(false), []);
 
-  useEffect(() => {
-    return () => {
-      // Clean up camera stream if component unmounts
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-      }
-    };
-  }, []);
+  const shortenedFileName =
+    fileName && fileName.length > 32
+      ? (() => {
+          const lastDot = fileName.lastIndexOf(".");
+          const base =
+            lastDot > 0 ? fileName.slice(0, lastDot) : fileName;
+          const ext =
+            lastDot > 0 ? fileName.slice(lastDot) : "";
+
+          const maxBaseLength = 24;
+          const trimmedBase =
+            base.length > maxBaseLength
+              ? `${base.slice(0, maxBaseLength)}…`
+              : base;
+
+          return `${trimmedBase}${ext}`;
+        })()
+      : fileName || "";
 
   if (preview) {
     return (
-      <div className="animate-fade-in flex flex-col items-center gap-4 sm:gap-6">
+      <div className="animate-fade-in flex flex-col items-center gap-4 sm:gap-6 w-full max-w-full">
         <div className="relative overflow-hidden rounded-[1.5rem] bg-black/90 w-full shadow-2xl ring-1 ring-white/10">
           <div className="flex justify-center p-2 sm:p-4">
             <img
@@ -154,7 +90,7 @@ export default function UploadZone({
               </svg>
             </div>
             <span className="truncate text-sm font-medium text-foreground block w-full">
-              {fileName}
+              {shortenedFileName}
             </span>
           </div>
           <button
@@ -170,15 +106,15 @@ export default function UploadZone({
   }
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col gap-4 w-full max-w-full">
       <div
         onClick={() => inputRef.current?.click()}
         onDrop={onDrop}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
-        className={`group relative flex cursor-pointer flex-col items-center justify-center gap-3 sm:gap-6 rounded-[1.5rem] p-6 sm:p-12 transition-all duration-500 ease-out overflow-hidden w-full ${
+        className={`group relative flex cursor-pointer flex-col items-center justify-center gap-3 sm:gap-6 rounded-[1.5rem] p-4 sm:p-8 transition-all duration-500 ease-out overflow-hidden w-full max-w-full ${
           dragActive
-            ? "bg-primary/10 scale-[1.02] ring-2 ring-primary/50 shadow-2xl shadow-primary/20"
+            ? "bg-primary/10 ring-2 ring-primary/50 shadow-2xl shadow-primary/20"
             : "bg-background/50 hover:bg-background/80 ring-1 ring-border/50 hover:ring-primary/30 hover:shadow-xl hover:shadow-primary/5"
         } ${disabled ? "pointer-events-none opacity-50" : ""}`}
       >
@@ -190,7 +126,7 @@ export default function UploadZone({
           onChange={(e) => handleFile(e.target.files?.[0])}
         />
 
-        <div className={`relative flex h-20 w-20 sm:h-28 sm:w-28 items-center justify-center rounded-full bg-primary/10 transition-all duration-500 group-hover:scale-110 group-hover:bg-primary/20 ${dragActive ? "scale-110 bg-primary/20" : ""}`}>
+        <div className={`relative flex h-20 w-20 sm:h-28 sm:w-28 items-center justify-center rounded-full bg-primary/10 transition-all duration-500 group-hover:bg-primary/20 ${dragActive ? "bg-primary/20" : ""}`}>
           <svg
             width="40"
             height="40"
@@ -231,72 +167,7 @@ export default function UploadZone({
         >
           Upload from device
         </button>
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={(e) => {
-            e.stopPropagation();
-            startCamera();
-          }}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary/30 hover:bg-primary-dark transition disabled:opacity-50"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M23 19V7a2 2 0 0 0-2-2h-3.17a2 2 0 0 1-1.41-.59l-1.66-1.66A2 2 0 0 0 13.17 2h-2.34a2 2 0 0 0-1.41.59L7.76 4.41A2 2 0 0 1 6.34 5H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2Z" />
-            <circle cx="12" cy="13" r="4" />
-          </svg>
-          Capture with camera
-        </button>
       </div>
-
-      {cameraError && (
-        <p className="text-sm text-danger/90">
-          {cameraError}
-        </p>
-      )}
-
-      {showCamera && (
-        <div className="mt-2 rounded-2xl border border-border/60 bg-card/70 p-3 sm:p-4 space-y-3">
-          <p className="text-xs sm:text-sm font-medium text-muted flex items-center gap-2">
-            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Camera active &mdash; align the X-ray and capture.
-          </p>
-          <div className="relative overflow-hidden rounded-xl bg-black/90 max-h-[300px] sm:max-h-[360px] flex items-center justify-center">
-            <video
-              ref={videoRef}
-              className="w-full h-full object-contain"
-              playsInline
-              autoPlay
-              muted
-            />
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end">
-            <button
-              type="button"
-              onClick={stopCamera}
-              className="w-full sm:w-auto rounded-lg bg-muted px-4 py-2 text-xs sm:text-sm font-semibold text-foreground hover:bg-muted/80 transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={capturePhoto}
-              className="w-full sm:w-auto rounded-lg bg-primary px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-md shadow-primary/30 hover:bg-primary-dark transition"
-            >
-              Capture image
-            </button>
-          </div>
-          <canvas ref={canvasRef} className="hidden" />
-        </div>
-      )}
     </div>
   );
 }
