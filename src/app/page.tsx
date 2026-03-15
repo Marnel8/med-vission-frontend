@@ -44,7 +44,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col">
       <Header />
 
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 sm:gap-12 px-4 sm:px-6 py-8 sm:py-12">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 sm:gap-12 px-4 sm:px-6 py-6 sm:py-12 overflow-hidden">
         {/* Hero */}
         <section className="animate-fade-in text-center flex flex-col items-center">
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-foreground pb-2">
@@ -56,10 +56,10 @@ export default function Home() {
         </section>
 
         {/* Main content: two-column on desktop */}
-        <div className="grid gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12">
+        <div className="grid gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12 w-full max-w-full">
           {/* Left column: Upload */}
-          <section className="animate-slide-up" style={{ animationDelay: '100ms', opacity: 0 }}>
-            <div className="group relative h-full overflow-hidden rounded-[2rem] bg-card p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-border/50 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(13,148,136,0.08)]">
+          <section className="animate-slide-up w-full" style={{ animationDelay: '100ms', opacity: 0 }}>
+            <div className="group relative h-full w-full overflow-hidden rounded-[2rem] bg-card p-5 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-border/50 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(13,148,136,0.08)]">
               <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
               
               <div className="relative z-10">
@@ -91,8 +91,8 @@ export default function Home() {
           </section>
 
           {/* Right column: Results */}
-          <section className="animate-slide-up" style={{ animationDelay: '200ms', opacity: 0 }}>
-            <div className="group relative h-full overflow-hidden rounded-[2rem] bg-card p-6 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-border/50 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(16,185,129,0.08)]">
+          <section className="animate-slide-up w-full" style={{ animationDelay: '200ms', opacity: 0 }}>
+            <div className="group relative h-full w-full overflow-hidden rounded-[2rem] bg-card p-5 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-border/50 transition-all duration-500 hover:shadow-[0_8px_30px_rgb(16,185,129,0.08)]">
               <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
               
               <div className="relative z-10 h-full">
